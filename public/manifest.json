@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "TingiPOS - Sari-Sari Store POS",
+  "short_name": "TingiPOS",
+  "description": "Offline-first, multi-device sari-sari store POS and inventory management system with tingi bundle pricing.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#047857",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"]
+}
