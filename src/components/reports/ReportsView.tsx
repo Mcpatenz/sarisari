@@ -22,7 +22,7 @@ import { formatCentavos, pesosToCentavos, centavosToPesos } from '../../lib/pric
 import { useStore } from '../../context/StoreContext';
 
 export const ReportsView: React.FC = () => {
-  const { currentRole } = useStore();
+  const { currentRole, setActiveTab } = useStore();
 
   const [sales, setSales] = useState<LocalSale[]>([]);
   const [expenses, setExpenses] = useState<StoreExpense[]>([]);
@@ -130,13 +130,23 @@ export const ReportsView: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowExpenseModal(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition active:scale-95"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Record Store Expense</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition active:scale-95"
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Peak Hour &amp; Revenue Trends &rarr;</span>
+          </button>
+
+          <button
+            onClick={() => setShowExpenseModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Record Store Expense</span>
+          </button>
+        </div>
       </div>
 
       {/* Main KPI Cards */}

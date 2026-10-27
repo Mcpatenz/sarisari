@@ -119,7 +119,32 @@ export const LowStockNotifier: React.FC = () => {
     }
   };
 
-  // Trigger toast alert when an item is critically low
+  // Browser Notification state
+  const [browserPermission, setBrowserPermission] = useState<NotificationPermission>(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission;
+    }
+    return 'default';
+  });
+
+  const requestBrowserNotificationPermission = async () => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        const perm = await Notification.requestPermission();
+        setBrowserPermission(perm);
+        if (perm === 'granted') {
+          new Notification('TingiPOS Notifications Enabled', {
+            body: 'You will receive desktop/mobile alerts when stock drops below minimum thresholds.',
+            icon: '/icon.svg',
+          });
+        }
+      } catch (e) {
+        console.warn('Notification permission error:', e);
+      }
+    }
+  };
+
+  // Trigger toast alert and native notification when an item is critically low
   useEffect(() => {
     if (lowStockItems.length > 0 && config.toastAlerts) {
       const mostCritical = lowStockItems[0];
@@ -131,6 +156,18 @@ export const LowStockNotifier: React.FC = () => {
           baseUnit: mostCritical.product.baseUnit,
         });
         playAlertSound();
+
+        // Native notification
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          const formattedStock =
+            mostCritical.product.baseUnit === 'GRAM'
+              ? `${mostCritical.product.stockBaseUnits / 1000}kg`
+              : `${mostCritical.product.stockBaseUnits} units`;
+          new Notification(`Low Stock Alert: ${mostCritical.product.name}`, {
+            body: `Stock dropped to ${formattedStock} (Threshold: ${mostCritical.effectiveThreshold}). Replenishment recommended.`,
+            icon: '/icon.svg',
+          });
+        }
       }
     }
   }, [lowStockItems.length]);
@@ -234,16 +271,34 @@ export const LowStockNotifier: React.FC = () => {
                   <span>Configurable Alert Thresholds</span>
                 </span>
 
-                <button
-                  onClick={() => updateConfig({ soundAlerts: !config.soundAlerts })}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-md font-semibold transition ${
-                    config.soundAlerts ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
-                  }`}
-                  title="Toggle sound chime"
-                >
-                  {config.soundAlerts ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-                  <span>{config.soundAlerts ? 'Sound ON' : 'Muted'}</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {typeof window !== 'undefined' && 'Notification' in window && (
+                    <button
+                      type="button"
+                      onClick={requestBrowserNotificationPermission}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-md font-semibold transition ${
+                        browserPermission === 'granted'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                      }`}
+                      title="Enable native browser push/toast notifications"
+                    >
+                      <Bell className="w-3.5 h-3.5" />
+                      <span>{browserPermission === 'granted' ? 'Native Alerts ON' : 'Enable Browser Alerts'}</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => updateConfig({ soundAlerts: !config.soundAlerts })}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md font-semibold transition ${
+                      config.soundAlerts ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                    }`}
+                    title="Toggle sound chime"
+                  >
+                    {config.soundAlerts ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                    <span>{config.soundAlerts ? 'Sound ON' : 'Muted'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Mode Toggle */}

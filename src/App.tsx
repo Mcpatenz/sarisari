@@ -14,6 +14,9 @@ import { SyncCenter } from './components/sync/SyncCenter';
 import { SalesHistory } from './components/history/SalesHistory';
 import { ReportsView } from './components/reports/ReportsView';
 import { LoyaltyManager } from './components/loyalty/LoyaltyManager';
+import { RevenueAnalyticsTab } from './components/analytics/RevenueAnalyticsTab';
+import { CashierShiftManager } from './components/shifts/CashierShiftManager';
+import { SupplierManager } from './components/suppliers/SupplierManager';
 
 const MainAppContent: React.FC = () => {
   const { activeTab } = useStore();
@@ -24,9 +27,12 @@ const MainAppContent: React.FC = () => {
 
       <main className="flex-1">
         {activeTab === 'pos' && <POSScreen />}
+        {activeTab === 'inventory' && <InventoryList />}
+        {activeTab === 'analytics' && <RevenueAnalyticsTab />}
+        {activeTab === 'shifts' && <CashierShiftManager />}
+        {activeTab === 'suppliers' && <SupplierManager />}
         {activeTab === 'loyalty' && <LoyaltyManager />}
         {activeTab === 'pricing' && <PricingSimulator />}
-        {activeTab === 'inventory' && <InventoryList />}
         {activeTab === 'sync' && <SyncCenter />}
         {activeTab === 'history' && <SalesHistory />}
         {activeTab === 'reports' && <ReportsView />}

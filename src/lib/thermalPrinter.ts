@@ -241,6 +241,21 @@ class ThermalPrinterService {
   }
 
   /**
+   * Send text string to connected printer (or simulate if none)
+   */
+  public async printReceiptText(text: string): Promise<{ success: boolean; simulated: boolean; message: string }> {
+    const encoder = new TextEncoder();
+    const init = new Uint8Array([0x1b, 0x40]); // ESC @
+    const body = encoder.encode(text + '\n\n\n');
+    const cut = new Uint8Array([0x1d, 0x56, 0x41, 0x10]); // GS V A 16 (cut)
+    const combined = new Uint8Array(init.length + body.length + cut.length);
+    combined.set(init, 0);
+    combined.set(body, init.length);
+    combined.set(cut, init.length + body.length);
+    return this.printRaw(combined);
+  }
+
+  /**
    * Send binary ESC/POS payload to connected printer (or simulate if none)
    */
   public async printRaw(data: Uint8Array): Promise<{ success: boolean; simulated: boolean; message: string }> {

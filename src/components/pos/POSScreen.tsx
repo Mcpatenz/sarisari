@@ -11,11 +11,28 @@ import { useStore } from '../../context/StoreContext';
 import { formatCentavos } from '../../lib/pricing';
 
 export const POSScreen: React.FC = () => {
-  const { cart, cartSummary } = useStore();
+  const { cart, cartSummary, activeShift, setActiveTab } = useStore();
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
 
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-4 pb-20 lg:pb-4 min-h-[calc(100vh-100px)]">
+      {/* Shift status banner if no open shift */}
+      {!activeShift && (
+        <div className="mb-3 px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="font-bold">Notice:</span>
+            <span>No cashier shift is currently open. Starting cash float (panukli) is untracked.</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('shifts')}
+            className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs transition"
+          >
+            Open Shift &rarr;
+          </button>
+        </div>
+      )}
+
       {/* Grid container */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
         {/* Left Column: Product Catalog & Search */}

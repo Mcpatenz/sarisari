@@ -45,6 +45,8 @@ export interface LocalProduct {
   version: number;
   updatedAt: string;
   imageUrl?: string;
+  supplierId?: string;
+  supplierSku?: string;
 }
 
 export interface CartItem {
@@ -97,6 +99,7 @@ export interface LocalSale {
   pointsRedeemed?: number;
   pointsDiscountCentavos?: number;
   customerNewPointsBalance?: number;
+  shiftId?: string;
   notes?: string;
   createdAt: string;
   items: SaleItemRecord[];
@@ -189,3 +192,106 @@ export interface StoreSettings {
   taxRegistrationText: string;
   offlineStockBufferPercent: number; // e.g. 10% reserve for offline selling safety
 }
+
+// Cashier Shift & Blind Counting
+export interface DenominationBreakdown {
+  p1000: number; // ₱1,000 bills
+  p500: number;  // ₱500 bills
+  p200: number;  // ₱200 bills
+  p100: number;  // ₱100 bills
+  p50: number;   // ₱50 bills
+  p20: number;   // ₱20 bills/coins
+  p10: number;   // ₱10 coins
+  p5: number;    // ₱5 coins
+  p1: number;    // ₱1 coins
+  p025: number;  // ₱0.25 coins
+}
+
+export interface CashierShift {
+  id: string;
+  cashierId: string;
+  cashierName: string;
+  deviceId: string;
+  deviceName: string;
+  status: 'OPEN' | 'CLOSED';
+  openedAt: string;
+  closedAt?: string;
+  openingFloatCentavos: number; // Initial cash drawer panukli
+  
+  // Totals accumulated during shift (centavos)
+  cashSalesCentavos: number;
+  gcashSalesCentavos: number;
+  utangSalesCentavos: number;
+  totalSalesCentavos: number;
+  transactionCount: number;
+  cashExpensesCentavos: number;
+  
+  // Blind count & reconciliation
+  expectedCashCentavos: number; // openingFloat + cashSales - cashExpenses
+  countedCashCentavos?: number; // Calculated from blind count submit
+  discrepancyCentavos?: number; // countedCash - expectedCash (positive = sobra/overage, negative = kulang/shortage)
+  denominations?: DenominationBreakdown;
+  
+  notes?: string;
+}
+
+// Supplier Management & Replenishment
+export interface Supplier {
+  id: string;
+  name: string; // e.g. "Puregold Price Club", "San Miguel Feeds Distributor"
+  contactPerson: string;
+  phone: string;
+  email?: string;
+  viber?: string;
+  address?: string;
+  paymentTerms?: string; // e.g. "Cash on Delivery (COD)", "7 Days Net", "Consignment"
+  leadTimeDays: number; // Delivery lead time in days
+  notes?: string;
+  productIds: string[]; // Linked inventory product IDs
+  active: boolean;
+  createdAt: string;
+}
+
+export interface PurchaseOrderItem {
+  productId: string;
+  productName: string;
+  sku: string;
+  baseUnit: BaseUnit;
+  currentStock: number;
+  suggestedQty: number;
+  orderQty: number;
+  costPerBaseCentavos: number;
+  totalCostCentavos: number;
+  packName?: string;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string;
+  supplierId: string;
+  supplierName: string;
+  createdAt: string;
+  items: PurchaseOrderItem[];
+  totalCostCentavos: number;
+  status: 'DRAFT' | 'SENT' | 'RECEIVED' | 'CANCELLED';
+  notes?: string;
+}
+
+// Auto-Order Suggestion
+export interface AutoOrderSuggestion {
+  productId: string;
+  productName: string;
+  category: string;
+  baseUnit: BaseUnit;
+  currentStock: number;
+  lowStockThreshold: number;
+  dailyRunRate: number; // Average units sold per day
+  daysOfInventory: number; // currentStock / dailyRunRate (DOI)
+  suggestedOrderQty: number; // Quantity needed to reach target days of supply
+  costPerBaseCentavos: number;
+  estimatedCostCentavos: number;
+  urgency: 'CRITICAL' | 'REORDER_NOW' | 'HEALTHY' | 'SURPLUS';
+  supplierId?: string;
+  supplierName?: string;
+}
+

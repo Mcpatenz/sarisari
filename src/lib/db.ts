@@ -13,8 +13,11 @@ import {
   StoreSettings,
   LoyaltyCustomer,
   LoyaltyConfig,
+  CashierShift,
+  Supplier,
+  PurchaseOrder,
 } from '../types';
-import { SEED_PRODUCTS } from './seedData';
+import { SEED_PRODUCTS, SEED_SUPPLIERS, SEED_SHIFTS, generateSeedSales } from './seedData';
 
 export const DEFAULT_LOYALTY_CONFIG: LoyaltyConfig = {
   pesosPerPoint: 50, // ₱50 spent = 1 point
@@ -65,6 +68,9 @@ export class SariSariDatabase extends Dexie {
   devices!: Table<StoreDevice, string>;
   expenses!: Table<StoreExpense, string>;
   customers!: Table<LoyaltyCustomer, string>;
+  shifts!: Table<CashierShift, string>;
+  suppliers!: Table<Supplier, string>;
+  purchaseOrders!: Table<PurchaseOrder, string>;
 
   constructor() {
     super('SariSariStoreDB_v1');
@@ -84,6 +90,18 @@ export class SariSariDatabase extends Dexie {
       devices: 'id, name, active',
       expenses: 'id, category, createdAt',
       customers: 'id, phone, name, pointsBalance',
+    });
+
+    this.version(3).stores({
+      products: 'id, sku, barcode, name, category, active, supplierId',
+      sales: 'id, deviceId, receiptNumber, syncStatus, createdAt, status, customerPhone, shiftId',
+      movements: 'id, productId, type, createdAt',
+      devices: 'id, name, active',
+      expenses: 'id, category, createdAt',
+      customers: 'id, phone, name, pointsBalance',
+      shifts: 'id, cashierId, deviceId, status, openedAt, closedAt',
+      suppliers: 'id, name, phone, active',
+      purchaseOrders: 'id, poNumber, supplierId, status, createdAt',
     });
   }
 }
@@ -106,7 +124,7 @@ export const DEFAULT_DEVICES: StoreDevice[] = [
 ];
 
 /**
- * Initializes the local IndexedDB database with seed products if empty
+ * Initializes the local IndexedDB database with seed products, suppliers, and sales if empty
  */
 export async function initializeDatabase(): Promise<void> {
   const count = await db.products.count();
@@ -128,11 +146,13 @@ export async function initializeDatabase(): Promise<void> {
     }));
     await db.movements.bulkAdd(movements);
   } else {
-    // Ensure any newly added seed items (e.g. Asukal Puti) are populated
+    // Ensure any newly added seed items (e.g. Asukal Puti) are populated and supplierId is set
     for (const seed of SEED_PRODUCTS) {
       const exists = await db.products.get(seed.id);
       if (!exists) {
         await db.products.add(seed);
+      } else if (!exists.supplierId && seed.supplierId) {
+        await db.products.update(seed.id, { supplierId: seed.supplierId });
       }
     }
   }
@@ -141,5 +161,24 @@ export async function initializeDatabase(): Promise<void> {
   const customerCount = await db.customers.count();
   if (customerCount === 0) {
     await db.customers.bulkAdd(SEED_CUSTOMERS);
+  }
+
+  // Ensure suppliers are initialized
+  const supplierCount = await db.suppliers.count();
+  if (supplierCount === 0) {
+    await db.suppliers.bulkAdd(SEED_SUPPLIERS);
+  }
+
+  // Ensure shifts are initialized
+  const shiftCount = await db.shifts.count();
+  if (shiftCount === 0) {
+    await db.shifts.bulkAdd(SEED_SHIFTS);
+  }
+
+  // Ensure sales are populated for analytics and auto-order velocity if empty
+  const salesCount = await db.sales.count();
+  if (salesCount === 0) {
+    const seedSales = generateSeedSales();
+    await db.sales.bulkAdd(seedSales);
   }
 }

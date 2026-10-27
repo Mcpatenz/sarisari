@@ -27,11 +27,16 @@ import {
   Printer,
   Bluetooth,
   Usb,
+  Clock,
+  TrendingUp,
+  Truck,
+  HardDrive,
 } from 'lucide-react';
 import { useStore, ActiveTab } from '../../context/StoreContext';
 import { PWAInstallButton } from './PWAInstallButton';
 import { LowStockNotifier } from '../notifications/LowStockNotifier';
 import { PrinterModal } from '../printer/PrinterModal';
+import { DatabaseBackupModal } from '../settings/DatabaseBackupModal';
 
 export const Header: React.FC = () => {
   const {
@@ -51,11 +56,13 @@ export const Header: React.FC = () => {
     triggerSync,
     lastSyncTime,
     printerSettings,
+    activeShift,
   } = useStore();
 
   const [showDeviceMenu, setShowDeviceMenu] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showPrinterModal, setShowPrinterModal] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
 
   const getDeviceIcon = (type: string) => {
     switch (type) {
@@ -72,8 +79,11 @@ export const Header: React.FC = () => {
 
   const navItems: { id: ActiveTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'pos', label: 'POS Counter', icon: <Store className="w-4 h-4" /> },
-    { id: 'loyalty', label: 'Suki Rewards', icon: <Gift className="w-4 h-4" /> },
     { id: 'inventory', label: 'Inventory & Tingi', icon: <Package className="w-4 h-4" /> },
+    { id: 'analytics', label: 'Revenue Trends', icon: <TrendingUp className="w-4 h-4" /> },
+    { id: 'shifts', label: 'Cashier Shifts', icon: <Clock className="w-4 h-4" />, badge: activeShift ? 1 : undefined },
+    { id: 'suppliers', label: 'Suppliers & PO', icon: <Truck className="w-4 h-4" /> },
+    { id: 'loyalty', label: 'Suki Rewards', icon: <Gift className="w-4 h-4" /> },
     { id: 'pricing', label: 'Pricing Model', icon: <Calculator className="w-4 h-4" /> },
     {
       id: 'sync',
@@ -111,6 +121,27 @@ export const Header: React.FC = () => {
 
         {/* Status controls */}
         <div className="flex items-center gap-2">
+          {/* Active Shift Indicator Button */}
+          <button
+            onClick={() => setActiveTab('shifts')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold transition active:scale-95 ${
+              activeShift
+                ? 'bg-emerald-950/70 text-emerald-300 border-emerald-700/60 hover:bg-emerald-900/60'
+                : 'bg-amber-950/70 text-amber-300 border-amber-700/60 hover:bg-amber-900/60'
+            }`}
+            title={
+              activeShift
+                ? `Shift open for ${activeShift.cashierName}. Tap to manage or blind count.`
+                : 'No active shift open. Tap to start shift.'
+            }
+          >
+            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden xl:inline">
+              {activeShift ? `Shift: ${activeShift.cashierName}` : 'No Shift'}
+            </span>
+            <span className="xl:hidden">{activeShift ? 'Shift Active' : 'Start Shift'}</span>
+          </button>
+
           {/* Online/Offline Simulator Button */}
           <button
             onClick={toggleSimulateOffline}
@@ -282,6 +313,16 @@ export const Header: React.FC = () => {
             )}
           </div>
 
+          {/* Database Backup Button */}
+          <button
+            onClick={() => setShowBackupModal(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition active:scale-95"
+            title="Export or Restore JSON Database Backup"
+          >
+            <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden md:inline">Backup</span>
+          </button>
+
           {/* Low Stock Alerts Notifier with configurable threshold */}
           <LowStockNotifier />
 
@@ -322,6 +363,9 @@ export const Header: React.FC = () => {
       {/* Printer Configuration Modal */}
       <PrinterModal isOpen={showPrinterModal} onClose={() => setShowPrinterModal(false)} />
 
+      {/* Database Backup & Restore Modal */}
+      <DatabaseBackupModal isOpen={showBackupModal} onClose={() => setShowBackupModal(false)} />
+
       {/* Main Tab Navigation */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 overflow-x-auto scrollbar-none">
         <nav className="flex items-center gap-1 pb-1 pt-1 border-t border-slate-800/80">
@@ -344,6 +388,8 @@ export const Header: React.FC = () => {
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                       item.id === 'sync' && conflictSalesCount > 0
                         ? 'bg-rose-500 text-white'
+                        : item.id === 'shifts'
+                        ? 'bg-emerald-400 text-slate-950'
                         : 'bg-amber-400 text-slate-950'
                     }`}
                   >
